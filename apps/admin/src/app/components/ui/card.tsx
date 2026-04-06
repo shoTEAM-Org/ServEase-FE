@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { cn } from "./utils";
 
-function Card({ className, ...props }: React.ComponentProps<"div">) {
+function Card({ className, children, ...props }: React.ComponentProps<"div"> & { children?: React.ReactNode }): React.ReactElement {
   return (
     <div
       data-slot="card"
@@ -11,11 +11,13 @@ function Card({ className, ...props }: React.ComponentProps<"div">) {
         className,
       )}
       {...props}
-    />
+    >
+      {children}
+    </div>
   );
 }
 
-function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
+function CardHeader({ className, children, ...props }: React.ComponentProps<"div">): JSX.Element {
   return (
     <div
       data-slot="card-header"
@@ -24,17 +26,21 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
         className,
       )}
       {...props}
-    />
+    >
+      {children}
+    </div>
   );
 }
 
-function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
+function CardTitle({ className, children, ...props }: React.ComponentProps<"div">): JSX.Element {
   return (
     <h4
       data-slot="card-title"
       className={cn("leading-none", className)}
       {...props}
-    />
+    >
+      {children}
+    </h4>
   );
 }
 
@@ -61,13 +67,15 @@ function CardAction({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-function CardContent({ className, ...props }: React.ComponentProps<"div">) {
+function CardContent({ className, children, ...props }: React.ComponentProps<"div">): JSX.Element {
   return (
     <div
       data-slot="card-content"
       className={cn("px-6 [&:last-child]:pb-6", className)}
       {...props}
-    />
+    >
+      {children}
+    </div>
   );
 }
 

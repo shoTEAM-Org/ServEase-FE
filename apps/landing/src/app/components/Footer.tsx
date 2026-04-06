@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import Link from "next/link";
 import imgLogo from "../../assets/f5a6a28739bed7a9af038e3bf55db0c6b4b73bfc.png";
 import { Facebook, Instagram, Twitter, Linkedin } from "lucide-react";
 import { DESIGN } from "../constants/design";
@@ -26,9 +26,9 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand Section */}
           <div>
-            <Link to="/" className="flex items-center gap-2 mb-4 group">
+            <Link href="/" className="flex items-center gap-2 mb-4 group">
               <img 
-                src={imgLogo} 
+                src={typeof imgLogo === 'string' ? imgLogo : imgLogo.src} 
                 alt="ServEase Logo" 
                 className="h-10 object-contain group-hover:opacity-80 transition-opacity" 
               />
@@ -47,7 +47,7 @@ export function Footer() {
               {quickLinks.map((link) => (
                 <li key={link.to}>
                   <Link
-                    to={link.to}
+                    href={link.to}
                     className="font-['Inter',sans-serif] text-sm text-gray-400 hover:text-white transition-colors duration-300 no-underline"
                   >
                     {link.label}

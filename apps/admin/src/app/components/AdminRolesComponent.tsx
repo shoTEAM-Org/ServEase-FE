@@ -57,7 +57,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useRouter } from "next/navigation";
 
 // Role permissions mapping
 const rolePermissions = {
@@ -109,7 +109,7 @@ type AdminType = {
 };
 
 export function AdminRolesComponent() {
-  const navigate = useNavigate();
+  const router = useRouter();
   
   // Admin data state (would normally come from API)
   const [admins, setAdmins] = useState<AdminType[]>([
@@ -332,7 +332,7 @@ export function AdminRolesComponent() {
         </div>
         <Button
           className="bg-[#00BF63] hover:bg-[#00A055] w-full sm:w-auto"
-          onClick={() => navigate("/add-new-admin")}
+          onClick={() => router.push("/add-new-admin")}
         >
           <Users className="w-4 h-4 mr-2" />
           Add New Admin

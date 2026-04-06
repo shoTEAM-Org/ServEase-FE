@@ -1,3 +1,5 @@
+"use client";
+
 import { LucideIcon } from "lucide-react";
 import { Card, CardContent } from "../ui/card";
 import { LineChart, Line, ResponsiveContainer } from "recharts";

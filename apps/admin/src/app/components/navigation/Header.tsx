@@ -1,14 +1,16 @@
+"use client";
+
 import { useState } from "react";
 import { Bell, Search, User, LogOut, Settings, ClipboardList, ChevronDown } from "lucide-react";
 import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
 import { useAuth } from "../../contexts/AuthContext";
-import { useNavigate } from "react-router";
+import { useRouter } from "next/navigation";
 import { SignOutModal } from "../SignOutModal";
 
 export function Header() {
   const { admin, logout } = useAuth();
-  const navigate = useNavigate();
+  const router = useRouter();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [isSignOutModalOpen, setIsSignOutModalOpen] = useState(false);
@@ -16,12 +18,12 @@ export function Header() {
   const handleLogout = () => {
     setIsSignOutModalOpen(false);
     logout();
-    navigate("/login");
+    router.push("/login");
   };
 
   const handleNavigate = (path: string) => {
     setShowProfileMenu(false);
-    navigate(path);
+    router.push(path);
   };
 
   const notifications = [

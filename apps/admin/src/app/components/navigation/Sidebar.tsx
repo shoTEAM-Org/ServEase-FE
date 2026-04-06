@@ -1,4 +1,7 @@
-import { NavLink } from "react-router";
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Users,
@@ -46,18 +49,18 @@ interface SidebarItemProps {
 }
 
 function SidebarItem({ item, isCollapsed }: SidebarItemProps) {
+  const pathname = usePathname();
+  const isActive = item.end ? pathname === item.to : pathname.startsWith(item.to);
+
   return (
     <li>
-      <NavLink
-        to={item.to}
-        end={item.end}
-        className={({ isActive }) =>
-          `flex items-center gap-3 px-3 py-2 rounded-lg transition-colors group relative ${
-            isActive
-              ? "bg-[#00BF63] text-white"
-              : "text-gray-700 hover:bg-[#DCFCE7] hover:text-[#15803D]"
-          }`
-        }
+      <Link
+        href={item.to}
+        className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors group relative ${
+          isActive
+            ? "bg-[#00BF63] text-white"
+            : "text-gray-700 hover:bg-[#DCFCE7] hover:text-[#15803D]"
+        }`}
         title={isCollapsed ? item.label : undefined}
       >
         <item.icon className="w-5 h-5 flex-shrink-0" />
@@ -75,7 +78,7 @@ function SidebarItem({ item, isCollapsed }: SidebarItemProps) {
             {item.label}
           </div>
         )}
-      </NavLink>
+      </Link>
     </li>
   );
 }
