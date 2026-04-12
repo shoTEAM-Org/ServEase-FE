@@ -1,0 +1,47 @@
+# Node
+node_modules/
+.npm
+npm-debug.log*
+
+# Build
+dist/
+build/
+.next/
+out/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary
+/tmp/
+/temp/
+*.tmp
+*.bak
+
+# Lockfiles
+# package-lock.json (Optional: usually kept, but in some monorepos it's reset)
+# yarn.lock
+# pnpm-lock.yaml
+
+# Testing
+coverage/
+.nyc_output
+
+# Vite
+vite.config.ts.timestamp-*
