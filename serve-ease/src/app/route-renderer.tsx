@@ -27,6 +27,7 @@ import { ProviderEarningsDetails } from "./components/ProviderEarningsDetails";
 import { ProviderHelpCenterPage } from "./components/ProviderHelpCenterPage";
 import { ProviderPerformanceInsightsPage } from "./components/ProviderPerformanceInsightsPage";
 import { ProviderProfilePage } from "./components/ProviderProfilePage";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import { ProviderReviewsPage } from "./components/ProviderReviewsPage";
 import { ProviderSettingsPage } from "./components/ProviderSettingsPage";
 import { RequestPayoutPage } from "./components/RequestPayoutPage";
@@ -162,7 +163,9 @@ export function RouteRenderer({ pathname }: { pathname: string }) {
   if (matched.layout) {
     content = (
       <RouteContextProvider outlet={page} params={matched.params} pathname={pathname}>
-        <Layout />
+        <ProtectedRoute>
+          <Layout />
+        </ProtectedRoute>
       </RouteContextProvider>
     );
   } else {

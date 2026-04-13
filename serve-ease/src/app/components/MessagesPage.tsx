@@ -1,6 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { Search, Send, Paperclip, ExternalLink, Star } from 'lucide-react';
 
+import {
+  getConversationMessages,
+  getProviderConversations,
+  sendConversationMessage,
+} from '@/lib/api/provider-portal';
+
 // Styles object for reusability - matching CounterOfferPage aesthetic
 const styles = {
   container: {
@@ -131,7 +137,7 @@ const styles = {
 };
 
 interface Message {
-  id: number;
+  id: string;
   text?: string;
   imageUri?: string;
   timestamp: string;
@@ -146,14 +152,15 @@ interface Booking {
 }
 
 interface Conversation {
-  id: number;
+  bookingId: string;
+  id: string;
   name: string;
   avatar: string;
   photo?: string;
   lastMessage: string;
   timestamp: string;
   unread: number;
-  rating?: number;
+  otherPartyPhone?: string;
   bookingRef?: string;
   category: 'booking' | 'general';
   booking?: Booking;
@@ -161,7 +168,7 @@ interface Conversation {
 }
 
 export function MessagesPage() {
-  const [selectedConversation, setSelectedConversation] = useState<number | null>(1);
+  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [messageText, setMessageText] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTab, setFilterTab] = useState<'all' | 'booking' | 'general'>('all');
@@ -202,75 +209,59 @@ export function MessagesPage() {
     return () => window.removeEventListener('resize', measure);
   }, []);
 
-  // Mock conversations data - using state to allow message updates
-  const [conversations, setConversations] = useState<Conversation[]>([
-    {
-      id: 1,
-      name: 'Maria Santos',
-      avatar: 'MS',
-      lastMessage: 'Thank you for the excellent service!',
-      timestamp: '10:30 AM',
-      unread: 2,
-      rating: 5,
-      bookingRef: 'BK-2024-001',
-      category: 'booking',
-      booking: {
-        serviceType: 'House Cleaning',
-        date: 'March 25, 2026',
-        time: '9:00 AM',
-        status: 'Confirmed',
-      },
-      messages: [
-        { id: 1, text: 'Hi! I would like to book your services for next week.', timestamp: '10:15 AM', sender: 'customer' },
-        { id: 2, text: 'Hello! I\'d be happy to help. What service are you looking for?', timestamp: '10:17 AM', sender: 'provider' },
-        { id: 3, text: 'I need house cleaning for a 3-bedroom apartment.', timestamp: '10:20 AM', sender: 'customer' },
-        { id: 4, text: 'Perfect! I can do that. When would you prefer?', timestamp: '10:22 AM', sender: 'provider' },
-        { id: 5, text: 'How about this Saturday at 9 AM?', timestamp: '10:25 AM', sender: 'customer' },
-        { id: 6, text: 'Saturday at 9 AM works great for me. I\'ll see you then!', timestamp: '10:27 AM', sender: 'provider' },
-        { id: 7, text: 'Thank you for the excellent service!', timestamp: '10:30 AM', sender: 'customer' },
-      ],
-    },
-    {
-      id: 2,
-      name: 'John Reyes',
-      avatar: 'JR',
-      lastMessage: 'Can you send me the invoice?',
-      timestamp: 'Yesterday',
-      unread: 0,
-      rating: 4,
-      bookingRef: 'BK-2024-002',
-      category: 'booking',
-      booking: {
-        serviceType: 'Plumbing Repair',
-        date: 'March 23, 2026',
-        time: '2:00 PM',
-        status: 'Completed',
-      },
-      messages: [
-        { id: 1, text: 'Hi, I saw your profile and I\'m interested in your plumbing services.', timestamp: 'Yesterday 3:00 PM', sender: 'customer' },
-        { id: 2, text: 'Hello! I\'d be glad to help. What seems to be the issue?', timestamp: 'Yesterday 3:05 PM', sender: 'provider' },
-        { id: 3, text: 'I have a leaking pipe in the bathroom.', timestamp: 'Yesterday 3:10 PM', sender: 'customer' },
-        { id: 4, text: 'I can come by tomorrow to take a look. Does 2 PM work for you?', timestamp: 'Yesterday 3:15 PM', sender: 'provider' },
-        { id: 5, text: 'Can you send me the invoice?', timestamp: 'Yesterday 4:00 PM', sender: 'customer' },
-      ],
-    },
-    {
-      id: 3,
-      name: 'Anna Cruz',
-      avatar: 'AC',
-      lastMessage: 'What time can you come tomorrow?',
-      timestamp: '2 days ago',
-      unread: 0,
-      category: 'general',
-      messages: [
-        { id: 1, text: 'Hello! Do you do electrical repairs?', timestamp: '2 days ago 11:00 AM', sender: 'customer' },
-        { id: 2, text: 'Yes, I do! What do you need help with?', timestamp: '2 days ago 11:10 AM', sender: 'provider' },
-        { id: 3, text: 'My ceiling fan stopped working.', timestamp: '2 days ago 11:15 AM', sender: 'customer' },
-        { id: 4, text: 'I can check that for you. When are you available?', timestamp: '2 days ago 11:20 AM', sender: 'provider' },
-        { id: 5, text: 'What time can you come tomorrow?', timestamp: '2 days ago 11:25 AM', sender: 'customer' },
-      ],
-    },
-  ]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadConversations = async () => {
+      try {
+        const response = await getProviderConversations();
+
+        if (!isMounted) {
+          return;
+        }
+
+        const mappedConversations = response.map((conversation) => ({
+          bookingId: conversation.bookingId,
+          id: conversation.id,
+          name: conversation.otherPartyName,
+          avatar: conversation.otherPartyName
+            .split(' ')
+            .map((part) => part[0])
+            .join('')
+            .slice(0, 2)
+            .toUpperCase(),
+          lastMessage: conversation.lastMessage || 'No messages yet',
+          timestamp: conversation.lastMessageTime
+            ? new Date(conversation.lastMessageTime).toLocaleString()
+            : 'New conversation',
+          unread: conversation.unreadCount,
+          otherPartyPhone: conversation.otherPartyPhone || undefined,
+          bookingRef: conversation.bookingId,
+          category: 'booking' as const,
+          booking: {
+            serviceType: conversation.serviceName || 'Service',
+            date: 'Scheduled via booking',
+            time: '',
+            status: 'Active',
+          },
+          messages: [],
+        }));
+
+        setConversations(mappedConversations);
+        setSelectedConversation(mappedConversations[0]?.id ?? null);
+      } catch (error) {
+        console.error('Unable to load conversations:', error);
+      }
+    };
+
+    loadConversations();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const quickReplies = ['On my way', 'Running 5 mins late', 'Completed'];
 
@@ -285,6 +276,48 @@ export function MessagesPage() {
 
   const activeConversation = conversations.find((c) => c.id === selectedConversation);
 
+  useEffect(() => {
+    if (!activeConversation?.bookingId) {
+      return;
+    }
+
+    let isMounted = true;
+
+    const loadMessages = async () => {
+      try {
+        const thread = await getConversationMessages(activeConversation.bookingId);
+
+        if (!isMounted) {
+          return;
+        }
+
+        setConversations((currentConversations) =>
+          currentConversations.map((conversation) =>
+            conversation.id === activeConversation.id
+              ? {
+                  ...conversation,
+                  messages: thread.messages.map((message) => ({
+                    id: message.id,
+                    text: message.text,
+                    timestamp: new Date(message.createdAt).toLocaleString(),
+                    sender: message.sender,
+                  })),
+                }
+              : conversation
+          )
+        );
+      } catch (error) {
+        console.error('Unable to load messages:', error);
+      }
+    };
+
+    loadMessages();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [activeConversation?.bookingId, activeConversation?.id]);
+
   // Auto-scroll to bottom when messages change
   useEffect(() => {
     if (messageThreadRef.current) {
@@ -298,11 +331,19 @@ export function MessagesPage() {
     return now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
   };
 
-  const handleSendMessage = () => {
-    if (messageText.trim() && selectedConversation !== null) {
+  const handleSendMessage = async () => {
+    if (!messageText.trim() || !activeConversation) {
+      return;
+    }
+
+    const nextMessage = messageText.trim();
+
+    try {
+      await sendConversationMessage(activeConversation.bookingId, nextMessage);
+
       const newMessage: Message = {
-        id: Date.now(),
-        text: messageText.trim(),
+        id: String(Date.now()),
+        text: nextMessage,
         timestamp: getCurrentTimestamp(),
         sender: 'provider',
       };
@@ -310,12 +351,14 @@ export function MessagesPage() {
       setConversations((prevConversations) =>
         prevConversations.map((conv) =>
           conv.id === selectedConversation
-            ? { ...conv, messages: [...conv.messages, newMessage], lastMessage: messageText.trim() }
+            ? { ...conv, messages: [...conv.messages, newMessage], lastMessage: nextMessage }
             : conv
         )
       );
 
       setMessageText('');
+    } catch (error) {
+      console.error('Unable to send message:', error);
     }
   };
 
@@ -343,7 +386,7 @@ export function MessagesPage() {
     reader.onload = (ev) => {
       if (selectedConversation !== null && ev.target?.result) {
         const newMessage: Message = {
-          id: Date.now(),
+          id: String(Date.now()),
           imageUri: ev.target.result as string,
           timestamp: getCurrentTimestamp(),
           sender: 'provider',
@@ -498,12 +541,12 @@ export function MessagesPage() {
                           <span style={{ fontSize: '11px', color: '#9CA3AF' }}>{conv.timestamp}</span>
                         </div>
                         
-                        {/* Rating and Booking Reference */}
+                        {/* Contact and Booking Reference */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                          {conv.rating && (
+                          {conv.otherPartyPhone && (
                             <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
                               <Star style={{ width: '12px', height: '12px', color: '#F59E0B', fill: '#F59E0B' }} />
-                              <span style={{ fontSize: '11px', color: '#6B7280' }}>{conv.rating}</span>
+                              <span style={{ fontSize: '11px', color: '#6B7280' }}>{conv.otherPartyPhone}</span>
                             </div>
                           )}
                           {conv.bookingRef && (
@@ -591,10 +634,10 @@ export function MessagesPage() {
                         <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#111827', margin: 0 }}>
                           {activeConversation.name}
                         </h3>
-                        {activeConversation.rating && (
+                        {activeConversation.otherPartyPhone && (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
                             <Star style={{ width: '14px', height: '14px', color: '#F59E0B', fill: '#F59E0B' }} />
-                            <span style={{ fontSize: '13px', color: '#6B7280' }}>{activeConversation.rating} rating</span>
+                            <span style={{ fontSize: '13px', color: '#6B7280' }}>{activeConversation.otherPartyPhone}</span>
                           </div>
                         )}
                       </div>

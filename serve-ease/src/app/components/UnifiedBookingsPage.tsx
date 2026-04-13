@@ -1,8 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { Search, Filter, MapPin, Calendar, Clock, ChevronRight, X } from "lucide-react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@/lib/react-router-compat";
 
-const styles = {
+import {
+  getProviderBookings,
+  updateProviderBookingStatus,
+  type ProviderBookingResponse,
+} from "@/lib/api/provider-portal";
+
+const styles: Record<string, CSSProperties> = {
   container: {
     minHeight: "100vh",
     backgroundColor: "#F9FAFB",
@@ -316,6 +322,51 @@ interface Item {
   status: TabType;
 }
 
+function formatBookingStatus(status?: string | null): TabType {
+  switch (status) {
+    case "pending":
+      return "new-requests";
+    case "confirmed":
+      return "upcoming";
+    case "in_progress":
+      return "in-progress";
+    case "completed":
+      return "completed";
+    case "cancelled":
+      return "cancelled";
+    case "declined":
+      return "declined";
+    default:
+      return "upcoming";
+  }
+}
+
+function formatBookingItem(booking: ProviderBookingResponse): Item {
+  const scheduledAt = booking.scheduled_at ? new Date(booking.scheduled_at) : null;
+
+  return {
+    id: booking.id,
+    customerName: booking.customer_name || "Customer",
+    serviceType: booking.service_title || "Service",
+    date: scheduledAt
+      ? scheduledAt.toLocaleDateString(undefined, {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        })
+      : "Date TBD",
+    time: scheduledAt
+      ? scheduledAt.toLocaleTimeString([], {
+          hour: "numeric",
+          minute: "2-digit",
+        })
+      : "Time TBD",
+    location: booking.service_address || "Location unavailable",
+    price: Number(booking.total_amount ?? 0),
+    status: formatBookingStatus(booking.status),
+  };
+}
+
 export function UnifiedBookingsPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>("new-requests");
@@ -324,81 +375,31 @@ export function UnifiedBookingsPage() {
   const [filterDateFrom, setFilterDateFrom] = useState("");
   const [filterDateTo, setFilterDateTo] = useState("");
   const [filterService, setFilterService] = useState("");
+  const [items, setItems] = useState<Item[]>([]);
 
-  // Combined data - both requests and bookings
-  const items: Item[] = [
-    {
-      id: "1",
-      customerName: "Maria Santos",
-      serviceType: "Plumbing Repair",
-      date: "March 25, 2024",
-      time: "2:00 PM",
-      location: "123 Quezon Ave, Quezon City",
-      price: 1500,
-      status: "new-requests",
-    },
-    {
-      id: "2",
-      customerName: "Juan dela Cruz",
-      serviceType: "Pipe Installation",
-      date: "March 26, 2024",
-      time: "10:00 AM",
-      location: "456 Taft Avenue, Manila",
-      price: 3500,
-      status: "new-requests",
-    },
-    {
-      id: "3",
-      customerName: "Anna Reyes",
-      serviceType: "Toilet Repair",
-      date: "March 27, 2024",
-      time: "9:00 AM",
-      location: "789 Rizal Street, Makati",
-      distance: "2.5 km",
-      price: 800,
-      status: "upcoming",
-    },
-    {
-      id: "4",
-      customerName: "Carlos Mendoza",
-      serviceType: "Water Heater Installation",
-      date: "March 24, 2024",
-      time: "1:00 PM",
-      location: "321 EDSA, Pasig City",
-      price: 4200,
-      status: "in-progress",
-    },
-    {
-      id: "5",
-      customerName: "Sofia Garcia",
-      serviceType: "Drain Cleaning",
-      date: "March 22, 2024",
-      time: "3:00 PM",
-      location: "555 Aurora Blvd, San Juan",
-      price: 600,
-      status: "completed",
-    },
-    {
-      id: "6",
-      customerName: "Roberto Cruz",
-      serviceType: "Pipe Leak Repair",
-      date: "March 21, 2024",
-      time: "11:00 AM",
-      location: "888 Shaw Blvd, Mandaluyong",
-      price: 1000,
-      status: "cancelled",
-    },
-    {
-      id: "7",
-      customerName: "Linda Torres",
-      serviceType: "Faucet Installation",
-      date: "March 23, 2024",
-      time: "4:00 PM",
-      location: "999 Ortigas Ave, Pasig",
-      price: 750,
-      status: "declined",
-    },
-  ];
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadBookings = async () => {
+      try {
+        const bookings = await getProviderBookings();
+
+        if (!isMounted) {
+          return;
+        }
+
+        setItems(bookings.map(formatBookingItem));
+      } catch (error) {
+        console.error("Unable to load provider bookings:", error);
+      }
+    };
+
+    loadBookings();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const filteredItems = items.filter((item) => {
     if (item.status !== activeTab) return false;
@@ -409,6 +410,11 @@ export function UnifiedBookingsPage() {
     ) {
       return false;
     }
+
+    if (filterService && !item.serviceType.toLowerCase().includes(filterService.toLowerCase())) {
+      return false;
+    }
+
     return true;
   });
 
@@ -472,14 +478,24 @@ export function UnifiedBookingsPage() {
     }
   };
 
-  const handleAccept = (itemId: string, e: React.MouseEvent) => {
+  const handleAccept = async (itemId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log("Accept request:", itemId);
+    await updateProviderBookingStatus(itemId, "confirmed");
+    setItems((currentItems) =>
+      currentItems.map((item) =>
+        item.id === itemId ? { ...item, status: "upcoming" } : item
+      )
+    );
   };
 
-  const handleReject = (itemId: string, e: React.MouseEvent) => {
+  const handleReject = async (itemId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log("Reject request:", itemId);
+    await updateProviderBookingStatus(itemId, "declined");
+    setItems((currentItems) =>
+      currentItems.map((item) =>
+        item.id === itemId ? { ...item, status: "declined" } : item
+      )
+    );
   };
 
   const handleCounterOffer = (itemId: string, e: React.MouseEvent) => {

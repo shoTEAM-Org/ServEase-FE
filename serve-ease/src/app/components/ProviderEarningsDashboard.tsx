@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "@/lib/react-router-compat";
 import { 
   DollarSign, 
   Clock, 
@@ -25,6 +25,12 @@ import {
   Tooltip, 
   ResponsiveContainer
 } from "recharts";
+
+import {
+  getProviderEarningsSummary,
+  getProviderPaymentHistory,
+  type ProviderPaymentHistoryResponse,
+} from "@/lib/api/provider-portal";
 
 // Styles object for reusability
 const styles = {
@@ -196,40 +202,154 @@ const styles = {
 
 export function ProviderEarningsDashboard() {
   const [selectedPeriod, setSelectedPeriod] = useState<"today" | "week" | "month" | "all">("month");
-
-  // Sample data
-  const earningsTrendData = [
-    { date: "Mar 6", amount: 1870 },
-    { date: "Mar 7", amount: 1425 },
-    { date: "Mar 8", amount: 3020 },
-    { date: "Mar 9", amount: 1530 },
-    { date: "Mar 10", amount: 2325 },
-    { date: "Mar 11", amount: 2850 },
-    { date: "Mar 12", amount: 3100 },
+  const periods: Array<{ key: "today" | "week" | "month" | "all"; label: string }> = [
+    { key: "today", label: "Today" },
+    { key: "week", label: "This Week" },
+    { key: "month", label: "This Month" },
+    { key: "all", label: "All Time" },
   ];
+  const [summary, setSummary] = useState({
+    completed_payments: 0,
+    monthly_earnings: 0,
+    net_earnings: 0,
+    platform_fees: 0,
+    total_earnings: 0,
+  });
+  const [paymentHistory, setPaymentHistory] = useState<ProviderPaymentHistoryResponse[]>([]);
 
-  const serviceCategoryData = [
-    { name: "House Cleaning", value: 4500, color: "#00BF63" },
-    { name: "Plumbing", value: 3200, color: "#059669" },
-    { name: "Electrical", value: 2800, color: "#10B981" },
-    { name: "Aircon Services", value: 1950, color: "#34D399" },
-  ];
+  useEffect(() => {
+    let isMounted = true;
 
-  const topEarningDays = [
-    { day: "Monday", amount: 3200, percentage: 100 },
-    { day: "Wednesday", amount: 2850, percentage: 89 },
-    { day: "Saturday", amount: 2650, percentage: 83 },
-    { day: "Friday", amount: 2100, percentage: 66 },
-  ];
+    const loadEarnings = async () => {
+      try {
+        const [earningsSummary, history] = await Promise.all([
+          getProviderEarningsSummary(),
+          getProviderPaymentHistory(),
+        ]);
 
-  const totalEarnings = selectedPeriod === "month" ? 12450 : 42300;
-  const pendingEarnings = 1530;
-  const inProcessing = 850;
-  const paidOut = 10920;
-  const completedBookings = 47;
-  const avgBookingValue = 2650;
-  const totalTips = 1340;
-  const platformFees = 1868;
+        if (!isMounted) {
+          return;
+        }
+
+        setSummary(earningsSummary);
+        setPaymentHistory(history);
+      } catch (error) {
+        console.error("Unable to load provider earnings:", error);
+      }
+    };
+
+    loadEarnings();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const filteredPayments = useMemo(() => {
+    const now = new Date();
+
+    return paymentHistory.filter((payment) => {
+      if (!payment.created_at) {
+        return selectedPeriod === "all";
+      }
+
+      const paymentDate = new Date(payment.created_at);
+
+      if (selectedPeriod === "today") {
+        return paymentDate.toDateString() === now.toDateString();
+      }
+
+      if (selectedPeriod === "week") {
+        const diff = now.getTime() - paymentDate.getTime();
+        return diff <= 7 * 24 * 60 * 60 * 1000;
+      }
+
+      if (selectedPeriod === "month") {
+        return (
+          paymentDate.getMonth() === now.getMonth() &&
+          paymentDate.getFullYear() === now.getFullYear()
+        );
+      }
+
+      return true;
+    });
+  }, [paymentHistory, selectedPeriod]);
+
+  const earningsTrendData = useMemo(() => {
+    const grouped = new Map<string, number>();
+
+    for (const payment of filteredPayments) {
+      if (!payment.created_at) {
+        continue;
+      }
+
+      const key = new Date(payment.created_at).toLocaleDateString(undefined, {
+        day: "numeric",
+        month: "short",
+      });
+      grouped.set(key, (grouped.get(key) ?? 0) + Number(payment.amount ?? 0));
+    }
+
+    return Array.from(grouped.entries()).map(([date, amount]) => ({ date, amount }));
+  }, [filteredPayments]);
+
+  const serviceCategoryData = useMemo(() => {
+    const colors = ["#00BF63", "#059669", "#10B981", "#34D399"];
+    const grouped = new Map<string, number>();
+
+    for (const payment of filteredPayments) {
+      const key = payment.service_title || "Uncategorized";
+      grouped.set(key, (grouped.get(key) ?? 0) + Number(payment.amount ?? 0));
+    }
+
+    return Array.from(grouped.entries()).map(([name, value], index) => ({
+      name,
+      value,
+      color: colors[index % colors.length],
+    }));
+  }, [filteredPayments]);
+
+  const topEarningDays = useMemo(() => {
+    const grouped = new Map<string, number>();
+
+    for (const payment of filteredPayments) {
+      if (!payment.created_at) {
+        continue;
+      }
+
+      const day = new Date(payment.created_at).toLocaleDateString(undefined, {
+        weekday: "long",
+      });
+      grouped.set(day, (grouped.get(day) ?? 0) + Number(payment.amount ?? 0));
+    }
+
+    const values = Array.from(grouped.entries())
+      .map(([day, amount]) => ({ day, amount }))
+      .sort((first, second) => second.amount - first.amount)
+      .slice(0, 4);
+    const maxAmount = values[0]?.amount ?? 0;
+
+    return values.map((entry) => ({
+      ...entry,
+      percentage: maxAmount ? Math.round((entry.amount / maxAmount) * 100) : 0,
+    }));
+  }, [filteredPayments]);
+
+  const totalEarnings =
+    selectedPeriod === "all" ? summary.total_earnings : filteredPayments.reduce((sum, payment) => sum + Number(payment.amount ?? 0), 0);
+  const pendingEarnings = filteredPayments
+    .filter((payment) => payment.status === "pending")
+    .reduce((sum, payment) => sum + Number(payment.amount ?? 0), 0);
+  const inProcessing = filteredPayments
+    .filter((payment) => payment.status === "processing")
+    .reduce((sum, payment) => sum + Number(payment.amount ?? 0), 0);
+  const paidOut = filteredPayments
+    .filter((payment) => payment.status === "completed")
+    .reduce((sum, payment) => sum + Number(payment.amount ?? 0), 0);
+  const completedBookings = summary.completed_payments;
+  const avgBookingValue = completedBookings ? totalEarnings / completedBookings : 0;
+  const totalTips = 0;
+  const platformFees = summary.platform_fees;
 
   return (
     <div style={styles.container}>
@@ -242,15 +362,10 @@ export function ProviderEarningsDashboard() {
 
         {/* Period Selector */}
         <div style={{ marginBottom: '32px', display: 'flex', gap: '12px', flexWrap: 'wrap' as const }}>
-          {[
-            { key: "today", label: "Today" },
-            { key: "week", label: "This Week" },
-            { key: "month", label: "This Month" },
-            { key: "all", label: "All Time" },
-          ].map((period) => (
+          {periods.map((period) => (
             <button
               key={period.key}
-              onClick={() => setSelectedPeriod(period.key as any)}
+              onClick={() => setSelectedPeriod(period.key)}
               style={{
                 ...styles.periodPill,
                 backgroundColor: selectedPeriod === period.key ? '#00BF63' : '#F3F4F6',
@@ -277,14 +392,6 @@ export function ProviderEarningsDashboard() {
               ...styles.kpiCard, 
               cursor: 'pointer',
               textDecoration: 'none',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 191, 99, 0.15)';
-              e.currentTarget.style.transform = 'translateY(-2px)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
-              e.currentTarget.style.transform = 'translateY(0)';
             }}
           >
             <div style={{...styles.kpiIconContainer, backgroundColor: '#D1FAE5'}}>
@@ -354,7 +461,7 @@ export function ProviderEarningsDashboard() {
                       borderRadius: '8px',
                       fontSize: '12px'
                     }}
-                    formatter={(value: any) => [`₱${value}`, 'Earnings']}
+                    formatter={(value: number | string) => [`₱${value}`, 'Earnings']}
                   />
                   <Line 
                     type="monotone" 
@@ -393,7 +500,7 @@ export function ProviderEarningsDashboard() {
                     ))}
                   </Pie>
                   <Tooltip 
-                    formatter={(value: any) => [`₱${value}`, 'Earnings']}
+                    formatter={(value: number | string) => [`₱${value}`, 'Earnings']}
                     contentStyle={{
                       backgroundColor: '#FFFFFF',
                       border: '1px solid #E5E7EB',
@@ -512,14 +619,6 @@ export function ProviderEarningsDashboard() {
                 ...styles.secondaryButton,
                 textDecoration: 'none',
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = '#00BF63';
-                e.currentTarget.style.color = '#00BF63';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = '#E5E7EB';
-                e.currentTarget.style.color = '#374151';
-              }}
             >
               <Eye style={{ width: '20px', height: '20px' }} />
               <span>View Earnings Details</span>
@@ -530,12 +629,6 @@ export function ProviderEarningsDashboard() {
                 ...styles.button,
                 ...styles.primaryButton,
                 textDecoration: 'none',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#059669';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = '#00BF63';
               }}
             >
               <Wallet style={{ width: '20px', height: '20px' }} />

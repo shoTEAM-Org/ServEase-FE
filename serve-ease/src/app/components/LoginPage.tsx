@@ -1,10 +1,15 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Calendar, DollarSign, Star } from 'lucide-react';
 import logo from '@/assets/d5c1631be6e8531539bd8040a765725f4a4ddc2c.png';
+import { useNavigate } from '@/lib/react-router-compat';
+
+import { useAuth } from '../contexts/AuthContext';
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const searchParams = useSearchParams();
+  const { isAuthenticated, login, isLoading: isAuthLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -12,21 +17,34 @@ export function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    if (isAuthLoading || !isAuthenticated) {
+      return;
+    }
+
+    navigate(searchParams.get('next') || '/provider/dashboard');
+  }, [isAuthLoading, isAuthenticated, navigate, searchParams]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      if (email && password) {
-        // Success - navigate to dashboard
-        navigate('/provider/dashboard');
-      } else {
-        setError('Please enter both email and password');
-        setIsLoading(false);
-      }
-    }, 1500);
+    if (!email || !password) {
+      setError('Please enter both email and password');
+      setIsLoading(false);
+      return;
+    }
+
+    const result = await login(email, password);
+
+    if (!result.success) {
+      setError(result.error ?? 'Unable to sign in with Supabase.');
+      setIsLoading(false);
+      return;
+    }
+
+    navigate(searchParams.get('next') || '/provider/dashboard');
   };
 
   // Styles

@@ -1,11 +1,14 @@
-import { Outlet, Link, useLocation } from 'react-router';
-import { Home, Calendar, DollarSign, MessageSquare, Settings, BarChart3, Bell, User, Menu, Star, Search, HelpCircle, TrendingUp, Briefcase } from 'lucide-react';
+import { Outlet, Link, useLocation } from '@/lib/react-router-compat';
+import { Home, Calendar, MessageSquare, Settings, BarChart3, Bell, User, Menu, Star, Search, HelpCircle, TrendingUp, Briefcase } from 'lucide-react';
 import { useState } from 'react';
 import logo from '@/assets/d5c1631be6e8531539bd8040a765725f4a4ddc2c.png';
+
+import { useAuth } from '../contexts/AuthContext';
 
 export function Layout() {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user } = useAuth();
 
   const navSections = [
     {
@@ -57,7 +60,9 @@ export function Layout() {
             </button>
             <img src={logo.src} alt="ServEase" className="h-8" />
             <div className="hidden md:block ml-4">
-              <p className="text-lg font-semibold text-gray-900">Welcome back, Sarah Johnson</p>
+              <p className="text-lg font-semibold text-gray-900">
+                Welcome back, {user?.full_name || 'Provider'}
+              </p>
             </div>
           </div>
           
@@ -82,7 +87,7 @@ export function Layout() {
                 <User className="w-5 h-5 text-green-600" />
               </div>
               <div className="hidden md:block">
-                <p className="text-sm font-bold text-gray-900">Sarah Johnson</p>
+                <p className="text-sm font-bold text-gray-900">{user?.full_name || 'Provider'}</p>
                 <p className="text-xs text-gray-500">Service Provider</p>
               </div>
             </div>
