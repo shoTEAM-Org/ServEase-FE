@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Outlet } from "react-router";
 import { Sidebar } from "../navigation/Sidebar";
 import { Header } from "../navigation/Header";
 import { DataProvider } from "../../../contexts/DataContext";
 import { Toaster } from "../ui/sonner";
+import { Outlet } from "@/lib/react-router-compat";
 
 export function RootLayout() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);

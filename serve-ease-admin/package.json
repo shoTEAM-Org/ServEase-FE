@@ -1,11 +1,16 @@
 {
-  "name": "@figma/my-make-file",
+  "name": "serve-ease-admin",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "build": "vite build",
-    "dev": "vite"
+    "build": "next build",
+    "dev": "next dev",
+    "lint": "eslint src/app src/lib next.config.ts eslint.config.mjs --max-warnings=0",
+    "start": "next start",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:e2e": "tsx tests/e2e/playwright-e2e.ts"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
@@ -47,7 +52,10 @@
     "input-otp": "1.4.2",
     "lucide-react": "0.487.0",
     "motion": "12.23.24",
+    "next": "^15.5.6",
     "next-themes": "0.4.6",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
     "react-day-picker": "8.10.1",
     "react-dnd": "16.0.1",
     "react-dnd-html5-backend": "16.0.1",
@@ -64,22 +72,18 @@
     "vaul": "1.1.2"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "4.1.12",
-    "@vitejs/plugin-react": "4.7.0",
+    "@tailwindcss/postcss": "^4.1.12",
+    "@types/jest": "^30.0.0",
+    "@types/node": "22.15.17",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "eslint": "9.25.1",
+    "eslint-config-next": "^15.5.6",
+    "jest": "^30.0.5",
+    "jest-environment-jsdom": "^30.0.5",
     "tailwindcss": "4.1.12",
-    "vite": "6.3.5"
-  },
-  "peerDependencies": {
-    "react": "18.3.1",
-    "react-dom": "18.3.1"
-  },
-  "peerDependenciesMeta": {
-    "react": {
-      "optional": true
-    },
-    "react-dom": {
-      "optional": true
-    }
+    "tsx": "^4.21.0",
+    "typescript": "5.8.3"
   },
   "pnpm": {
     "overrides": {

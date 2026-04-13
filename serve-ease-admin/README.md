@@ -1,11 +1,26 @@
 
-  # Multi-Service Super Admin Panel (Community)
+# ServEase Admin
 
-  This is a code bundle for Multi-Service Super Admin Panel (Community). The original project is available at https://www.figma.com/design/o8dzb0E2BRxZg5PxBuGZZ4/Multi-Service-Super-Admin-Panel--Community-.
+ServEase admin portal aligned to the shared FE multi-app template.
 
-  ## Running the code
+## Stack
 
-  Run `npm i` to install the dependencies.
+- Next.js app router
+- TypeScript
+- Tailwind CSS
+- Jest
 
-  Run `npm run dev` to start the development server.
-  
+## Scripts
+
+```bash
+npm install
+npm run dev
+npm run lint
+npm run build
+```
+
+## Notes
+
+- Routing is handled through the Next app router entrypoints in `src/app`.
+- A small compatibility layer in `src/lib/react-router-compat.tsx` keeps the existing admin pages working while the legacy routing assumptions are phased out.
+- Build-time lint and type blocking are temporarily relaxed in `next.config.ts` because some legacy admin screens still use data shapes that do not fully match the typed store yet.

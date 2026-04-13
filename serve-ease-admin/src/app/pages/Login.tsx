@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Checkbox } from "../components/ui/checkbox";
 import { Eye, EyeOff, Loader2, CheckCircle, AlertCircle } from "lucide-react";
-import { Link } from "react-router";
 import { ContactAdminModal } from "../components/ContactAdminModal";
+import { Link, useNavigate } from "@/lib/react-router-compat";
 
 export function Login() {
   const navigate = useNavigate();

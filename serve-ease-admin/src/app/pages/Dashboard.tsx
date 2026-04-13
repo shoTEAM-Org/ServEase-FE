@@ -48,7 +48,7 @@ import {
   Legend,
 } from "recharts";
 import { useData } from "../../contexts/DataContext";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@/lib/react-router-compat";
 import type { Booking } from "../../types";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -103,12 +103,8 @@ export function Dashboard() {
   const pendingPayouts = payoutRequests.filter((p) => p.status === "Pending").length;
   const openDisputes = disputes.filter((d) => d.status === "Open" || d.status === "Under Review").length;
 
-  const activeProviders = serviceProviders.filter(
-    (sp) => sp.status === "Verified" || sp.status === "Active"
-  ).length;
-  const pendingProviderApprovals = serviceProviders.filter(
-    (sp) => sp.status === "Pending" || sp.status === "Under Review"
-  ).length;
+  const activeProviders = serviceProviders.filter((sp) => sp.status === "Active").length;
+  const pendingProviderApprovals = pendingApprovals;
   const totalUsers = customers.length + serviceProviders.length;
 
   // ── Chart 1: Customers Overview — preserved exactly ─────────────
@@ -125,33 +121,33 @@ export function Dashboard() {
   // ── Chart 2: Service Providers Overview — preserved exactly ──────
   const providerOverviewData = [
     {
-      category: "Marketplace",
-      Active: serviceProviders.filter(p => p.category === "Marketplace" && p.status === "Active").length,
+      category: "Home Maintenance",
+      Active: serviceProviders.filter((p) => p.categoryId === "CAT-001" && p.status === "Active").length,
       Pending: Math.floor(pendingApprovals * 0.2),
     },
     {
-      category: "Grocery",
-      Active: serviceProviders.filter(p => p.category === "Grocery" && p.status === "Active").length,
+      category: "Beauty",
+      Active: serviceProviders.filter((p) => p.categoryId === "CAT-002" && p.status === "Active").length,
       Pending: Math.floor(pendingApprovals * 0.15),
     },
     {
-      category: "Restaurant",
-      Active: serviceProviders.filter(p => p.category === "Restaurant" && p.status === "Active").length,
+      category: "Cleaning",
+      Active: serviceProviders.filter((p) => p.categoryId === "CAT-003" && p.status === "Active").length,
       Pending: Math.floor(pendingApprovals * 0.25),
     },
     {
-      category: "Pharmacy",
-      Active: serviceProviders.filter(p => p.category === "Pharmacy" && p.status === "Active").length,
+      category: "Pet Services",
+      Active: serviceProviders.filter((p) => p.categoryId === "CAT-004" && p.status === "Active").length,
       Pending: Math.floor(pendingApprovals * 0.15),
     },
     {
-      category: "Healthcare",
-      Active: serviceProviders.filter(p => p.category === "Healthcare" && p.status === "Active").length,
+      category: "Events",
+      Active: serviceProviders.filter((p) => p.categoryId === "CAT-005" && p.status === "Active").length,
       Pending: Math.floor(pendingApprovals * 0.15),
     },
     {
-      category: "Franchise",
-      Active: serviceProviders.filter(p => p.category === "Franchise" && p.status === "Active").length,
+      category: "Automotive & Tech",
+      Active: serviceProviders.filter((p) => p.categoryId === "CAT-006" && p.status === "Active").length,
       Pending: Math.floor(pendingApprovals * 0.1),
     },
   ];

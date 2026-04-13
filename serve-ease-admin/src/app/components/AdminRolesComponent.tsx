@@ -57,7 +57,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@/lib/react-router-compat";
 
 // Role permissions mapping
 const rolePermissions = {

@@ -1,4 +1,4 @@
-import { NavLink } from "react-router";
+import { NavLink } from "@/lib/react-router-compat";
 import {
   LayoutDashboard,
   Users,
@@ -33,7 +33,7 @@ import {
   Percent,
   Wallet,
 } from "lucide-react";
-import logo from "figma:asset/d516c8a7c0636434620c64585c9fd8b4bb2db014.png";
+import logo from "@/assets/d516c8a7c0636434620c64585c9fd8b4bb2db014.png";
 
 interface SidebarItemProps {
   item: {
@@ -168,7 +168,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
         {!isCollapsed && (
           <div className="flex flex-col items-center gap-2">
             <img
-              src={logo}
+              src={logo.src}
               alt="ServEase"
               className="h-8 w-auto"
             />

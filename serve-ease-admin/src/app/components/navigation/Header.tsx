@@ -3,8 +3,8 @@ import { Bell, Search, User, LogOut, Settings, ClipboardList, ChevronDown } from
 import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
 import { useAuth } from "../../contexts/AuthContext";
-import { useNavigate } from "react-router";
 import { SignOutModal } from "../SignOutModal";
+import { useNavigate } from "@/lib/react-router-compat";
 
 export function Header() {
   const { admin, logout } = useAuth();

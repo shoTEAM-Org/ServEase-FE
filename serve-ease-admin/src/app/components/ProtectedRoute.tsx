@@ -1,6 +1,6 @@
-import { Navigate } from "react-router";
 import { useAuth } from "../contexts/AuthContext";
 import { Loader2 } from "lucide-react";
+import { Navigate } from "@/lib/react-router-compat";
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();

@@ -1,17 +1,18 @@
-# FE Multi Template Repo Starter
+# ServEase FE Multi Repo
 
-Starter for a multi-app Next.js monorepo that calls the central FE Multi pipeline.
+Frontend monorepo for the ServEase customer and admin applications, aligned to the shared FE multi-app template structure.
+
+## Apps
+- `serve-ease` - provider-facing frontend
+- `serve-ease-admin` - admin portal frontend
 
 ## Includes
-- `.github/workflows/master-pipeline-fe-multi.yml`
-- Three sample Next.js apps:
-  - `System-1-Web`
-  - `System-2-Web`
-  - `System-3-Web`
-- Per-app ESLint, Jest, Docker, TypeScript, and simple UI test
-- Root `sonar-project.properties` for multi-app scan
+- `.github/workflows/fe-pipeline-caller.yml`
+- Per-app Next.js config, ESLint, Jest, Docker, TypeScript, and app-router structure
+- Root `sonar-project.properties` for multi-app scanning
+- Shared performance tests under `tests/performance`
 
-## Require repository variables
+## Required Repository Variable
 
 `FE_MULTI_SYSTEMS_JSON`
 
@@ -20,43 +21,34 @@ Example:
 ```json
 [
   {
-    "name": "System 1",
-    "dir": "System-1-Web",
-    "image": "system-1-web",
-    "vercel_project_secret": "VERCEL_PROJECT_ID_SYSTEM_1"
+    "name": "ServEase Provider",
+    "dir": "serve-ease",
+    "image": "serve-ease",
+    "vercel_project_secret": "VERCEL_PROJECT_ID_SERVE_EASE"
   },
   {
-    "name": "System 2",
-    "dir": "System-2-Web",
-    "image": "system-2-web",
-    "vercel_project_secret": "VERCEL_PROJECT_ID_SYSTEM_2"
-  },
-  {
-    "name": "System 3",
-    "dir": "System-3-Web",
-    "image": "system-3-web",
-    "vercel_project_secret": "VERCEL_PROJECT_ID_SYSTEM_3"
+    "name": "ServEase Admin",
+    "dir": "serve-ease-admin",
+    "image": "serve-ease-admin",
+    "vercel_project_secret": "VERCEL_PROJECT_ID_SERVE_EASE_ADMIN"
   }
 ]
 ```
 
-## Required repository secrets
+## Required Repository Secrets
 - `VERCEL_TOKEN`
 - `VERCEL_ORG_ID`
 - Vercel project ID secrets referenced in `FE_MULTI_SYSTEMS_JSON`
 - `SONAR_TOKEN`
 - `SONAR_ORGANIZATION`
 - `SONAR_PROJECT_KEY`
-- `SLACK_WEBHOOK_URL`
-- `DISCORD_WEBHOOK_URL`
+- `GH_PR_TOKEN`
 
-## Local check
+## Local Check
 
 Run per app:
 
 ```bash
-cd System-1-Web && npm install && npm run lint && npm run test && npm run build
+cd serve-ease && npm install && npm run lint && npm run test && npm run build
+cd serve-ease-admin && npm install && npm run lint && npm run test && npm run build
 ```
-
-
-test

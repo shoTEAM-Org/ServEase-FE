@@ -1,12 +1,13 @@
-import { RouterProvider } from "react-router";
-import { router } from "./routes";
+"use client";
+
 import { AuthProvider } from "./contexts/AuthContext";
+import { RouteRenderer } from "./route-renderer";
 
 // ServEase Admin Dashboard - Main Entry Point
-export default function App() {
+export default function App({ pathname }: { pathname: string }) {
   return (
     <AuthProvider>
-      <RouterProvider router={router} />
+      <RouteRenderer pathname={pathname} />
     </AuthProvider>
   );
 }

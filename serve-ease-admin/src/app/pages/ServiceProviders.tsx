@@ -19,7 +19,7 @@ import {
   TableRow,
 } from "../components/ui/table";
 import { Search, Star, TrendingUp, Users, CheckCircle, AlertCircle, Upload, Download, FileText } from "lucide-react";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@/lib/react-router-compat";
 import { useData } from "../../contexts/DataContext";
 import type { ProviderStatus, ServiceProvider } from "../../types";
 import { ProviderDetailsDrawer } from "../components/ProviderDetailsDrawer";
