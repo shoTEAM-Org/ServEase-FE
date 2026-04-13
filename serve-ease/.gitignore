@@ -13,7 +13,8 @@
 # testing
 /coverage
 
-# next.js
+# framework build output
+/dist
 /.next/
 /out/
 
@@ -23,6 +24,7 @@
 # misc
 .DS_Store
 *.pem
+vite.svg
 
 # debug
 npm-debug.log*

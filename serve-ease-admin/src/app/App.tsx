@@ -1,9 +1,12 @@
-import "./App.css";
+import { RouterProvider } from "react-router";
+import { router } from "./routes";
+import { AuthProvider } from "./contexts/AuthContext";
 
-interface AppProps {
-  children?: React.ReactNode;
-}
-
-export default function App({ children }: AppProps) {
-  return <div className="app-root">{children}</div>;
+// ServEase Admin Dashboard - Main Entry Point
+export default function App() {
+  return (
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
+  );
 }
